@@ -9,16 +9,16 @@ from matplotlib import colors
 import matplotlib as mpl
 from matplotlib.transforms import Bbox
 
-class corvid_Data:
+class corvidData:
 
     def __init__(self,online=True):
         self.online = online
-        if(corvid_Data.isConnected() and self.online):
+        if(corvidData.isConnected() and self.online):
             print("downloading data from: https://covid.ourworldindata.org/data/ecdc/")
-            corvid_Data.getData(self)
+            corvidData.getData(self)
         else:
             print("Searching for local data files...")
-            corvid_Data.findFile(['cases.csv','deaths.csv'])
+            corvidData.findFile(['cases.csv','deaths.csv'])
             path_cases = "cases.csv"
             path_deaths = "deaths.csv"
             self.cases = pd.read_csv(path_cases,sep=',')
@@ -86,8 +86,8 @@ class corvid_Data:
 
     def plotData(self):
         self.nDates = len(self.cases['date'])
-        corvid_Data.cumulative(self,self.where)
-        corvid_Data.fatilityRate(self)
+        corvidData.cumulative(self,self.where)
+        corvidData.fatilityRate(self)
 
         fig, ax = plt.subplots(3,sharex=True)
         ax[0].set_title(self.where)
@@ -110,16 +110,16 @@ class corvid_Data:
         ax[2].tick_params(axis='x', rotation=90)
         plt.show()
 
-class corvid_Model:
+class corvidModel:
     def __init__(self, data, recovery):
         self.data = data
         self.recP = recovery
-        self.time = corvid_Model.dateToDays(self.data.cases['date'])
+        self.time = corvidModel.dateToDays(self.data.cases['date'])
 
     def cumulative(self, data):
         output = np.zeros((len(data)))
         for i in range(1,len(data)):
-            output[i] = data[i-1] + data[i]
+            output[i] = output[i-1] + data[i]
         return output.astype(int)
 
     def dateToDays(dates):
@@ -138,21 +138,11 @@ class corvid_Model:
     def identifyFirst(self, data):
         for i in range(len(data)):
             if(data[i] > 0.0):
-                return i-1 #start on day of zero cases before any trend
-
+                if (i == 0):
+                    return i
+                else:
+                    return i-1 #start on day of zero cases before any trend
         return len(data)-1 #if no cases return end of data array for that country
-
-
-    def plotFromFirstCase(self):
-
-        for country in self.data.cases.columns.values:
-            if((country != 'World') and (country != 'date') and (country != 'China')):
-                start = corvid_Model.identifyFirst(self, self.data.cases[country])
-                cumul = corvid_Model.cumulative(self,self.data.cases[country][start:].values)
-                plt.plot(cumul,label=country)
-        # plt.legend()
-        plt.show()
-
 
     def histogramPeak(self,threshold_cases,threshold_deaths):
 
@@ -163,8 +153,8 @@ class corvid_Model:
 
         for country in self.data.cases.columns.values:
             if((country != 'World') and (country != 'date')):
-                cumul_deaths = corvid_Model.cumulative(self,self.data.deaths[country].values)
-                cumul_cases = corvid_Model.cumulative(self,self.data.cases[country].values)
+                cumul_deaths = corvidModel.cumulative(self,self.data.deaths[country].values)
+                cumul_cases = corvidModel.cumulative(self,self.data.cases[country].values)
                 for i in range(len(cumul_cases)):
                     if(cumul_cases[i] >= threshold_cases):
                         maximum_cases.append(cumul_cases.max())
@@ -225,15 +215,15 @@ class corvid_Model:
 
         for country in self.data.cases.columns.values:
             if((country != 'World') and (country != 'date')):
-                start = corvid_Model.identifyFirst(self, self.data.cases[country])
-                cumul = corvid_Model.cumulative(self,self.data.cases[country][start:].values)
+                start = corvidModel.identifyFirst(self, self.data.cases[country])
+                cumul = corvidModel.cumulative(self,self.data.cases[country][start:].values)
                 sc1, = ax[1][0].plot(cumul,label=country)
         ax[1][0].set_ylabel("Total Cases")
         ax[1][0].set_xlabel("Days since 1st Case")
         for country in self.data.deaths.columns.values:
             if((country != 'World') and (country != 'date')):
-                start = corvid_Model.identifyFirst(self, self.data.deaths[country])
-                cumul = corvid_Model.cumulative(self,self.data.deaths[country][start:].values)
+                start = corvidModel.identifyFirst(self, self.data.deaths[country])
+                cumul = corvidModel.cumulative(self,self.data.deaths[country][start:].values)
                 ax[1][1].plot(cumul,label=country)
         ax[1][1].set_ylabel("Total Deaths")
         ax[1][1].set_xlabel("Days since 1st Death")
@@ -257,14 +247,33 @@ class corvid_Model:
                 if line.contains(event)[0]:
                     print(line.get_label())
 
-        print(bin_cases)
         fig.canvas.mpl_connect('motion_notify_event', line_hover)
         plt.show()
 
+    def currentCases(self,country):
+        length = len(self.data.cases[country])
+        currentC = np.zeros((length))
+        currentD = np.zeros((length))
 
-data = corvid_Data(True)
+        currentC = corvidModel.cumulative(self, self.data.cases[country].values)
+        for i in range(self.recP,length):
+            currentC[i] = currentC[i] - currentC[i-self.recP]
+
+        plt.plot(self.time,corvidModel.cumulative(self,self.data.cases[country].values),'r-',label="total Case")
+        plt.plot(self.time,currentC,'b--',label="Total Current Cases")
+        plt.legend()
+        plt.show()
+
+
+
+
+
+
+
+
+data = corvidData(False)
 data.location("United Kingdom")
 data.plotData()
-# model = corvid_Model(data,14)
-# model.plotFromFirstCase()
-# model.histogramPeak(10.0,5.)
+model = corvidModel(data,10)
+model.histogramPeak(200.0,100.)
+model.currentCases("United Kingdom")

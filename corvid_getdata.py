@@ -6,16 +6,16 @@ import socket
 import os
 from datetime import datetime
 
-class corvid_Data:
+class corvidData:
 
     def __init__(self,online=True):
         self.online = online
-        if(corvid_Data.isConnected() and self.online):
+        if(corvidData.isConnected() and self.online):
             print("downloading data from: https://covid.ourworldindata.org/data/ecdc/")
-            corvid_Data.getData(self)
+            corvidData.getData(self)
         else:
             print("Searching for local data files...")
-            corvid_Data.findFile(['cases.csv','deaths.csv'])
+            corvidData.findFile(['cases.csv','deaths.csv'])
             path_cases = "cases.csv"
             path_deaths = "deaths.csv"
             self.cases = pd.read_csv(path_cases,sep=',')
@@ -83,8 +83,8 @@ class corvid_Data:
 
     def plotData(self):
         self.nDates = len(self.cases['date'])
-        corvid_Data.cumulative(self,self.where)
-        corvid_Data.fatilityRate(self)
+        corvidData.cumulative(self,self.where)
+        corvidData.fatilityRate(self)
 
         fig, ax = plt.subplots(3,sharex=True)
         ax[0].set_title(self.where)
@@ -107,6 +107,6 @@ class corvid_Data:
         ax[2].tick_params(axis='x', rotation=90)
         plt.show()
 
-data = corvid_Data()
+data = corvidData()
 data.location("Singapore")
 data.plotData()
