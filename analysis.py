@@ -252,14 +252,17 @@ class corvidModel:
 
     def currentCases(self,country):
         length = len(self.data.cases[country])
+        inC = self.data.cases[country].values
+        outC = self.data.deaths[country].values
         currentC = np.zeros((length))
-        currentD = np.zeros((length))
-
-        currentC = corvidModel.cumulative(self, self.data.cases[country].values)
         for i in range(self.recP,length):
-            currentC[i] = currentC[i] - currentC[i-self.recP]
+            outC[i] = outC[i] + inC[i-self.recP]
+        totalC = corvidModel.cumulative(self, self.data.cases[country].values)
 
-        plt.plot(self.time,corvidModel.cumulative(self,self.data.cases[country].values),'r-',label="total Case")
+        for i in range(1,length):
+            currentC[i] = currentC[i-1] + inC[i] - outC[i]
+
+        plt.plot(self.time,totalC,'r-',label="total Case")
         plt.plot(self.time,currentC,'b--',label="Total Current Cases")
         plt.legend()
         plt.show()
@@ -272,8 +275,8 @@ class corvidModel:
 
 
 data = corvidData(False)
-data.location("United Kingdom")
-data.plotData()
+# data.location("United Kingdom")
+# data.plotData()
 model = corvidModel(data,10)
-model.histogramPeak(200.0,100.)
+# model.histogramPeak(200.0,100.)
 model.currentCases("United Kingdom")
