@@ -264,6 +264,9 @@ class corvidModel:
 
         plt.plot(self.time,totalC,'r-',label="total Case")
         plt.plot(self.time,currentC,'b--',label="Total Current Cases")
+        plt.title(country)
+        plt.xlabel("Time [d]")
+        plt.ylabel("Cases")
         plt.legend()
         plt.show()
 
@@ -273,10 +276,10 @@ class corvidModel:
 
 
 
-
-data = corvidData(False)
-# data.location("United Kingdom")
-# data.plotData()
-model = corvidModel(data,10)
-# model.histogramPeak(200.0,100.)
-model.currentCases("United Kingdom")
+where = "United Kingdom"
+data = corvidData(True)
+data.location(where)
+data.plotData()
+model = corvidModel(data,14)
+model.histogramPeak(2000.0,100.)
+model.currentCases(where)
